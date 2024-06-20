@@ -8,8 +8,11 @@ def normalMonteCarlo(avg, std_dev, num_reps):
     arr = np.random.normal(avg, std_dev, num_reps)
     return arr
 
-def calcZ(corr):
-    return 0.5 * np.log((1 + corr)/(1 - corr))
+def calcZ(r):
+    return 0.5 * np.log((1 + r)/(1 - r))
+
+def calcR(z):
+    return ((np.exp(2 * z) - 1) / (np.exp(2 * z) + 1))
 
 def calcReturns(data):
     i = 0
@@ -80,12 +83,41 @@ def __main__():
     print(z_desvpad)
 
     sims = 100
+    z_rand_petr_wege = normalMonteCarlo(z_petr_wege, z_desvpad, sims)
+    z_rand_petr_abev = normalMonteCarlo(z_petr_abev, z_desvpad, sims)
+    z_rand_petr_vale = normalMonteCarlo(z_petr_vale, z_desvpad, sims)
+    z_rand_wege_abev = normalMonteCarlo(z_wege_abev, z_desvpad, sims)
+    z_rand_wege_vale = normalMonteCarlo(z_wege_vale, z_desvpad, sims)
+    z_rand_abev_vale = normalMonteCarlo(z_abev_vale, z_desvpad, sims)
+
+    r_rand_petr_wege = calcR(z_rand_petr_wege)
+    r_rand_petr_abev = calcR(z_rand_petr_abev)
+    r_rand_petr_vale = calcR(z_rand_petr_vale)
+    r_rand_wege_abev = calcR(z_rand_wege_abev)
+    r_rand_wege_vale = calcR(z_rand_wege_vale)
+    r_rand_abev_vale = calcR(z_rand_abev_vale)
+
     print("Monte Carlo")
-    print(normalMonteCarlo(z_petr_wege, z_desvpad, sims))
-    print(normalMonteCarlo(z_petr_abev, z_desvpad, sims))
-    print(normalMonteCarlo(z_petr_vale, z_desvpad, sims))
-    print(normalMonteCarlo(z_wege_abev, z_desvpad, sims))
-    print(normalMonteCarlo(z_wege_vale, z_desvpad, sims))
-    print(normalMonteCarlo(z_abev_vale, z_desvpad, sims))
+    print(r_rand_petr_wege)
+    print(r_rand_petr_abev)
+    print(r_rand_petr_vale)
+    print(r_rand_wege_abev)
+    print(r_rand_wege_vale)
+    print(r_rand_abev_vale)
+
+    cov_petr_wege = r_rand_petr_wege * petr_var * wege_var
+    cov_petr_abev = r_rand_petr_abev * petr_var * abev_var
+    cov_petr_vale = r_rand_petr_vale * petr_var * vale_var
+    cov_wege_abev = r_rand_wege_abev * wege_var * abev_var
+    cov_wege_vale = r_rand_wege_vale * wege_var * vale_var
+    cov_abev_vale = r_rand_abev_vale * abev_var * vale_var
+
+    print("Covariances")
+    print(cov_petr_wege)
+    print(cov_petr_abev)
+    print(cov_petr_vale)
+    print(cov_wege_abev)
+    print(cov_wege_vale)
+    print(cov_abev_vale)
 
 __main__()
