@@ -226,7 +226,7 @@ def __main__():
         if calculation_type == 'risk':
             risk_tolerance = input("Expected risk: ")
             # Find optimal weights that maximize return (minimize return * -1)
-            constraints.append({'type': 'ineq', 'fun': lambda weights: risk_tolerance - metrics(weights, np.array(ret_means), np.array(cov_to_test))[1]})
+            constraints.append({'type': 'ineq', 'fun': lambda weights: float(risk_tolerance) - metrics(weights, np.array(ret_means), np.array(cov_to_test))[1]})
             optimal_weights = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(cov_to_test))[0] * -1, initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
 
 
