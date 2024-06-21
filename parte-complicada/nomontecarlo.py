@@ -7,15 +7,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mplticker
 import mplcursors
 
-def normalMonteCarlo(avgs, std_dev, num_reps):
-    i = 0
-    arr = []
-    while(i < len(avgs)):
-        arr_i = np.random.normal(avgs[i], std_dev, num_reps)
-        arr.append(arr_i)
-        i += 1
-    return arr
-
 def calcR(z):
     return ((np.exp(2 * z) - 1) / (np.exp(2 * z) + 1))
 
@@ -103,53 +94,40 @@ def __main__():
     print("Correlations")
     print(correlations)
 
-    z_calc_all = calcZ(np.array(correlations))
-    print("CALC z all")
-    print(z_calc_all)
-
-    z_desvpad = 1 / np.sqrt(amount - 3)
-    print("Z desvpad")
-    print(z_desvpad)
-
-    sims = 100
-    z_all = normalMonteCarlo(z_calc_all, z_desvpad, sims)
-    print("z all")
-    print(z_all)
-
-    r_rand = calcR(z_all)
-    print("Monte Carlo")
-    print(r_rand)
-
-    cov_petr_wege = r_rand[0 ] * np.sqrt(petr_var) * np.sqrt(wege_var)
-    cov_petr_abev = r_rand[1 ] * np.sqrt(petr_var) * np.sqrt(abev_var)
-    cov_petr_vale = r_rand[2 ] * np.sqrt(petr_var) * np.sqrt(vale_var)
-    cov_wege_petr = r_rand[3 ] * np.sqrt(wege_var) * np.sqrt(petr_var)
-    cov_wege_abev = r_rand[4 ] * np.sqrt(wege_var) * np.sqrt(abev_var)
-    cov_wege_vale = r_rand[5 ] * np.sqrt(wege_var) * np.sqrt(vale_var)
-    cov_abev_petr = r_rand[6 ] * np.sqrt(abev_var) * np.sqrt(petr_var)
-    cov_abev_wege = r_rand[7 ] * np.sqrt(abev_var) * np.sqrt(wege_var)
-    cov_abev_vale = r_rand[8 ] * np.sqrt(abev_var) * np.sqrt(vale_var)
-    cov_vale_petr = r_rand[9 ] * np.sqrt(vale_var) * np.sqrt(petr_var)
-    cov_vale_wege = r_rand[10] * np.sqrt(vale_var) * np.sqrt(wege_var)
-    cov_vale_abev = r_rand[11] * np.sqrt(vale_var) * np.sqrt(abev_var)
+    cov_petr_petr = st.covariance(ret_petr, ret_petr)
+    cov_petr_wege = st.covariance(ret_petr, ret_wege)
+    cov_petr_abev = st.covariance(ret_petr, ret_abev)
+    cov_petr_vale = st.covariance(ret_petr, ret_vale)
+    cov_wege_wege = st.covariance(ret_wege, ret_wege)
+    cov_wege_petr = st.covariance(ret_wege, ret_petr)
+    cov_wege_abev = st.covariance(ret_wege, ret_abev)
+    cov_wege_vale = st.covariance(ret_wege, ret_vale)
+    cov_abev_abev = st.covariance(ret_abev, ret_abev)
+    cov_abev_petr = st.covariance(ret_abev, ret_petr)
+    cov_abev_wege = st.covariance(ret_abev, ret_wege)
+    cov_abev_vale = st.covariance(ret_abev, ret_vale)
+    cov_vale_vale = st.covariance(ret_vale, ret_vale)
+    cov_vale_petr = st.covariance(ret_vale, ret_petr)
+    cov_vale_wege = st.covariance(ret_vale, ret_wege)
+    cov_vale_abev = st.covariance(ret_vale, ret_abev)
 
     covs = [
-        np.full(sims, petr_var),
+        cov_petr_petr,
         cov_petr_wege,
         cov_petr_abev,
         cov_petr_vale,
         cov_wege_petr,
-        np.full(sims, wege_var),
+        cov_wege_wege,
         cov_wege_abev,
         cov_wege_vale,
         cov_abev_petr,
         cov_abev_wege,
-        np.full(sims, abev_var),
+        cov_abev_abev,
         cov_abev_vale,
         cov_vale_petr,
         cov_vale_wege,
         cov_vale_abev,
-        np.full(sims, vale_var),
+        cov_vale_vale
     ]
 
     print("Covariances")
@@ -157,35 +135,25 @@ def __main__():
 
     ## Markowitz
     print("#####################")
-
-    calculation_type = input("Calculation type: ")
-    expected_value = input("Expected variable value: ")
-
-    linspace_min = 100
-    linspace_max = 0
-
-    total_efficient_frontier_volatility = []
-    total_efficient_frontier_return = []
-
     i = 0
     while(i < 1):
         print("Exec: " + str(i))
-        cov_to_test = [[covs[0 ][i],
-                       covs[1 ][i],
-                       covs[2 ][i],
-                       covs[3 ][i]],
-                       [covs[4 ][i],
-                       covs[5 ][i],
-                       covs[6 ][i],
-                       covs[7 ][i]],
-                       [covs[8 ][i],
-                       covs[9 ][i],
-                       covs[10][i],
-                       covs[11][i]],
-                       [covs[12][i],
-                       covs[13][i],
-                       covs[14][i],
-                       covs[15][i]]]
+        cov_to_test = [[covs[0 ],
+                       covs[1 ],
+                       covs[2 ],
+                       covs[3 ]],
+                       [covs[4 ],
+                       covs[5 ],
+                       covs[6 ],
+                       covs[7 ]],
+                       [covs[8 ],
+                       covs[9 ],
+                       covs[10],
+                       covs[11]],
+                       [covs[12],
+                       covs[13],
+                       covs[14],
+                       covs[15]]]
         
         print("Return means")
         print(ret_means)
@@ -208,7 +176,7 @@ def __main__():
         constraints = [{'type':'eq','fun':lambda weights: np.sum(weights) - 1}]
 
         # Calculate weights and returns for the optimizations and input filtering
-        maximum_return_weights = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(cov_to_test))[0] * -1, initial_guess, method='SLSQP', bounds=bounds, constraints=constraints,).x
+        maximum_return_weights = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(cov_to_test))[0] * -1, initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
         maximum_return = metrics(maximum_return_weights, np.array(ret_means), np.array(cov_to_test))[0]
         
         minimum_risk_weights = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(cov_to_test))[1], initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
@@ -228,9 +196,9 @@ def __main__():
 
         sharpe_ratio_optimal_weights = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(cov_to_test))[2] * -1, initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
 
-        
+        calculation_type = input("Calc type: ")
         if calculation_type == 'risk':
-            risk_tolerance = expected_value
+            risk_tolerance = input("Expected risk: ")
             # Find optimal weights that maximize return (minimize return * -1)
             constraints.append({'type': 'ineq', 'fun': lambda weights: float(risk_tolerance) - metrics(weights, np.array(ret_means), np.array(cov_to_test))[1]})
             optimal_weights = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(cov_to_test))[0] * -1, initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
@@ -239,21 +207,15 @@ def __main__():
 
 
         elif calculation_type == 'return':
-            expected_return = expected_value
+            expected_return = input("Expected return: ")
             # Find optimal weights that minimize risk
             constraints.append({'type': 'eq', 'fun': lambda weights: metrics(weights, np.array(ret_means), np.array(cov_to_test))[0] - float(expected_return)})
             optimal_weights = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(cov_to_test))[1], initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
             print(optimal_weights)
             print(metrics(optimal_weights, np.array(ret_means), np.array(cov_to_test)))
 
-        if(linspace_min > minimum_risk_return) :
-            linspace_min = minimum_risk_return
-
-        if(linspace_max < maximum_return) :
-            linspace_max = maximum_return
-
         # Generate a range of target returns
-        target_returns = np.linspace(linspace_min, linspace_max, 100)
+        target_returns = np.linspace(minimum_risk_return, maximum_return, 100)
 
         efficient_frontier_volatility = []
         efficient_frontier_return = []
@@ -274,9 +236,6 @@ def __main__():
         #
         # Graph
         #
-
-        total_efficient_frontier_volatility.append(efficient_frontier_volatility)
-        total_efficient_frontier_return.append(efficient_frontier_return)
 
         plt.style.use('./mplstyles/financialgraphs.mplstyle')
 
@@ -309,7 +268,5 @@ def __main__():
         plt.show()
 
         i += 1
-    
-    i = 0
 
 __main__()
