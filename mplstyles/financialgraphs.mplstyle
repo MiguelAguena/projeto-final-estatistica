@@ -37,6 +37,6 @@ axes.prop_cycle: cycler('color', ['3fb5ff', '00ffbf', 'ffff9f', 'ff7f7d', 'fc346
 
 # Image and figure background color
 image.cmap: RdPu                # Colormap for images
-figure.facecolor: 1e1e1e        # Background color of the figure
-axes.facecolor: 1e1e1e          # Background color of axes
-savefig.facecolor: 1e1e1e       # Background color when saving figures
+figure.facecolor: 101010        # Background color of the figure
+axes.facecolor: 101010          # Background color of axes
+savefig.facecolor: 101010       # Background color when saving figures

@@ -254,7 +254,7 @@ def __main__():
 
         legend_text = '\n'.join([f'{metric}: {metrics(optimal_weights, np.array(ret_means), np.array(cov_to_test))[j]:.2%}' for j, metric in enumerate(['Expected Return','Volatility','Sharpe Ratio'])]) + '\n\n'
         legend_text = legend_text + '\n'.join([f'{asset}\'s weight: {j:.2%}' for asset, j in zip(['PETR4', 'WEGE3', 'ABEV3', 'VALE3'], optimal_weights)]) + '\n'
-        plt.legend(title=f'{legend_text}')
+        axes.legend(title=f'{legend_text}')
 
         # Enable cursor interaction on the graph
         cursor = mplcursors.cursor()

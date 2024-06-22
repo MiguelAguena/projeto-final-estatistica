@@ -32,7 +32,7 @@ def metrics(weights, log_mean, covariance):
         log_mean[3] * weights[3]
     ]))
 
-    volatility = np.sqrt(weights.T.dot(covariance.dot(weights)))
+    volatility = np.sqrt(np.abs(weights.T.dot(covariance.dot(weights))))
 
     sharpe_ratio = returns / volatility
     return [returns, volatility, sharpe_ratio]
@@ -186,7 +186,7 @@ def __main__():
     plt.xlabel('Volatility')
     plt.ylabel('Return')
     markowitz_optimization, axes = plt.subplots(figsize=(14, 8))
-    axes.set_title('Anual Expected Return x Volatility (' + str(sims) + ' simulations)')
+    axes.set_title('Confidence Interval - Anual Expected Return x Volatility (' + str(sims) + ' simulations; p = 95%)')
 
     print("PLEASE WAIT")
 
@@ -302,9 +302,9 @@ def __main__():
         # Graph
         #
 
-        axes.plot(efficient_frontier_volatility, efficient_frontier_return, '#3fccff', zorder=2)
-        axes.scatter(metrics(optimal_weights, np.array(ret_means), np.array(cov_to_test))[1], metrics(optimal_weights, np.array(ret_means), np.array(cov_to_test))[0], marker='o', color='#ff00ff', zorder=3)
-        axes.scatter(metrics(sharpe_ratio_optimal_weights, np.array(ret_means), np.array(cov_to_test))[1], metrics(sharpe_ratio_optimal_weights, np.array(ret_means), np.array(cov_to_test))[0], marker='o', color='#ffaa00', zorder=3)
+        #axes.plot(efficient_frontier_volatility, efficient_frontier_return, '#3fccff', zorder=2)
+        #axes.scatter(metrics(optimal_weights, np.array(ret_means), np.array(cov_to_test))[1], metrics(optimal_weights, np.array(ret_means), np.array(cov_to_test))[0], marker='o', color='#ff00ff', zorder=3)
+        #axes.scatter(metrics(sharpe_ratio_optimal_weights, np.array(ret_means), np.array(cov_to_test))[1], metrics(sharpe_ratio_optimal_weights, np.array(ret_means), np.array(cov_to_test))[0], marker='o', color='#ffaa00', zorder=3)
 
         axes.xaxis.set_major_formatter(mplticker.PercentFormatter(1.0))
         axes.yaxis.set_major_formatter(mplticker.PercentFormatter(1.0))
@@ -376,25 +376,27 @@ def __main__():
     cov_min_vale_abev = r_min[11] * np.sqrt(vale_var) * np.sqrt(abev_var)
 
     covs_min = [
-        np.full(sims, petr_var),
+        [petr_var,
         cov_min_petr_wege,
         cov_min_petr_abev,
-        cov_min_petr_vale,
-        cov_min_wege_petr,
-        np.full(sims, wege_var),
+        cov_min_petr_vale],
+        [cov_min_wege_petr,
+        wege_var,
         cov_min_wege_abev,
-        cov_min_wege_vale,
-        cov_min_abev_petr,
+        cov_min_wege_vale],
+        [cov_min_abev_petr,
         cov_min_abev_wege,
-        np.full(sims, abev_var),
-        cov_min_abev_vale,
-        cov_min_vale_petr,
+        abev_var,
+        cov_min_abev_vale],
+        [cov_min_vale_petr,
         cov_min_vale_wege,
         cov_min_vale_abev,
-        np.full(sims, vale_var),
+        vale_var],
     ]
 
     covs_min = np.array(covs_min) * 252
+    print(covs_min)
+    print("\n\n")
 
     cov_max_petr_wege = r_max[0 ] * np.sqrt(petr_var) * np.sqrt(wege_var)
     cov_max_petr_abev = r_max[1 ] * np.sqrt(petr_var) * np.sqrt(abev_var)
@@ -410,31 +412,38 @@ def __main__():
     cov_max_vale_abev = r_max[11] * np.sqrt(vale_var) * np.sqrt(abev_var)
 
     covs_max = [
-        np.full(sims, petr_var),
+        [petr_var,
         cov_max_petr_wege,
         cov_max_petr_abev,
-        cov_max_petr_vale,
-        cov_max_wege_petr,
-        np.full(sims, wege_var),
+        cov_max_petr_vale],
+        [cov_max_wege_petr,
+        wege_var,
         cov_max_wege_abev,
-        cov_max_wege_vale,
-        cov_max_abev_petr,
+        cov_max_wege_vale],
+        [cov_max_abev_petr,
         cov_max_abev_wege,
-        np.full(sims, abev_var),
-        cov_max_abev_vale,
-        cov_max_vale_petr,
+        abev_var,
+        cov_max_abev_vale],
+        [cov_max_vale_petr,
         cov_max_vale_wege,
         cov_max_vale_abev,
-        np.full(sims, vale_var),
+        vale_var]
     ]
 
     covs_max = np.array(covs_max) * 252
+    print(covs_max)
 
     # Generate a range of target returns
     target_returns = np.linspace(linspace_min, linspace_max, 100)
 
     medium_efficient_frontier_volatility = []
     medium_efficient_frontier_return = []
+
+    min_efficient_frontier_volatility = []
+    min_efficient_frontier_return = []
+
+    max_efficient_frontier_volatility = []
+    max_efficient_frontier_return = []
 
     bounds = [(0, 1)] * (len(df.columns) - 1)
     initial_guess = [(1 / (len(df.columns) - 1))] * (len(df.columns) - 1)
@@ -451,7 +460,27 @@ def __main__():
         medium_efficient_frontier_volatility.append(result.fun)
         medium_efficient_frontier_return.append(target_return)
 
+        constraints = [
+            {'type': 'eq', 'fun': lambda weights: np.sum(weights) - 1},
+            {'type': 'eq', 'fun': lambda weights: metrics(weights, np.array(ret_means), np.array(covs_min))[0] - target_return}
+        ]
+        result = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(covs_min))[1], initial_guess, method='SLSQP', bounds=bounds, constraints=constraints)
+
+        min_efficient_frontier_volatility.append(result.fun)
+        min_efficient_frontier_return.append(target_return)
+
+        constraints = [
+            {'type': 'eq', 'fun': lambda weights: np.sum(weights) - 1},
+            {'type': 'eq', 'fun': lambda weights: metrics(weights, np.array(ret_means), np.array(covs_max))[0] - target_return}
+        ]
+        result = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(covs_max))[1], initial_guess, method='SLSQP', bounds=bounds, constraints=constraints)
+
+        max_efficient_frontier_volatility.append(result.fun)
+        max_efficient_frontier_return.append(target_return)
+
     axes.plot(medium_efficient_frontier_volatility, medium_efficient_frontier_return, '#ff0000', zorder=4)
+    axes.plot(min_efficient_frontier_volatility, min_efficient_frontier_return, '#00ff00', zorder=4)
+    axes.plot(max_efficient_frontier_volatility, max_efficient_frontier_return, '#ff0000', zorder=4)
 
     # Calculate optimal weights
     constraints = [{'type':'eq','fun':lambda weights: np.sum(weights) - 1}]
