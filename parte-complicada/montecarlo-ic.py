@@ -480,7 +480,7 @@ def __main__():
 
     axes.plot(medium_efficient_frontier_volatility, medium_efficient_frontier_return, '#ff0000', zorder=4)
     axes.plot(min_efficient_frontier_volatility, min_efficient_frontier_return, '#00ff00', zorder=4)
-    axes.plot(max_efficient_frontier_volatility, max_efficient_frontier_return, '#ff0000', zorder=4)
+    axes.plot(max_efficient_frontier_volatility, max_efficient_frontier_return, '#00ff00', zorder=4)
 
     # Calculate optimal weights
     constraints = [{'type':'eq','fun':lambda weights: np.sum(weights) - 1}]
