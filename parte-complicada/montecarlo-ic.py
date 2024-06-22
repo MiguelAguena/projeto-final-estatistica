@@ -182,11 +182,14 @@ def __main__():
     horizontal_min = 100
     horizontal_max = 0
 
+    plt.figure(1)
     plt.style.use('./mplstyles/financialgraphs.mplstyle')
     plt.xlabel('Volatility')
     plt.ylabel('Return')
     markowitz_optimization, axes = plt.subplots(figsize=(14, 8))
-    axes.set_title('Confidence Interval - Anual Expected Return x Volatility (' + str(sims) + ' simulations; p = 95%)')
+    markowitz_optimization2, axes2 = plt.subplots(figsize=(14, 8))
+    axes.set_title('Anual Expected Return x Volatility (' + str(sims) + ' simulations)')
+    axes2.set_title('Confidence Interval - Anual Expected Return x Volatility (' + str(sims) + ' simulations; p = 95%)')
 
     print("PLEASE WAIT")
 
@@ -302,12 +305,14 @@ def __main__():
         # Graph
         #
 
-        #axes.plot(efficient_frontier_volatility, efficient_frontier_return, '#3fccff', zorder=2)
-        #axes.scatter(metrics(optimal_weights, np.array(ret_means), np.array(cov_to_test))[1], metrics(optimal_weights, np.array(ret_means), np.array(cov_to_test))[0], marker='o', color='#ff00ff', zorder=3)
-        #axes.scatter(metrics(sharpe_ratio_optimal_weights, np.array(ret_means), np.array(cov_to_test))[1], metrics(sharpe_ratio_optimal_weights, np.array(ret_means), np.array(cov_to_test))[0], marker='o', color='#ffaa00', zorder=3)
+        axes.plot(efficient_frontier_volatility, efficient_frontier_return, '#3fccff', zorder=2)
+        axes.scatter(metrics(optimal_weights, np.array(ret_means), np.array(cov_to_test))[1], metrics(optimal_weights, np.array(ret_means), np.array(cov_to_test))[0], marker='o', color='#ff00ff', zorder=3)
+        axes.scatter(metrics(sharpe_ratio_optimal_weights, np.array(ret_means), np.array(cov_to_test))[1], metrics(sharpe_ratio_optimal_weights, np.array(ret_means), np.array(cov_to_test))[0], marker='o', color='#ffaa00', zorder=3)
 
         axes.xaxis.set_major_formatter(mplticker.PercentFormatter(1.0))
+        axes2.xaxis.set_major_formatter(mplticker.PercentFormatter(1.0))
         axes.yaxis.set_major_formatter(mplticker.PercentFormatter(1.0))
+        axes2.yaxis.set_major_formatter(mplticker.PercentFormatter(1.0))
 
         # Enable cursor interaction on the graph
         cursor = mplcursors.cursor()
@@ -479,37 +484,49 @@ def __main__():
         max_efficient_frontier_return.append(target_return)
 
     axes.plot(medium_efficient_frontier_volatility, medium_efficient_frontier_return, '#ff0000', zorder=4)
-    axes.plot(min_efficient_frontier_volatility, min_efficient_frontier_return, '#00ff00', zorder=4)
-    axes.plot(max_efficient_frontier_volatility, max_efficient_frontier_return, '#00ff00', zorder=4)
+    axes2.plot(medium_efficient_frontier_volatility, medium_efficient_frontier_return, '#ff0000', zorder=4)
+    axes2.plot(min_efficient_frontier_volatility, min_efficient_frontier_return, '#00ff00', zorder=4)
+    axes2.plot(max_efficient_frontier_volatility, max_efficient_frontier_return, '#00ff00', zorder=4)
 
-    # Calculate optimal weights
-    constraints = [{'type':'eq','fun':lambda weights: np.sum(weights) - 1}]
-
-    optimal_weights = []
+    optimal_weights_mean = []
+    sharpe_ratio_optimal_weights_mean = []
 
     if calculation_type == 'risk':
         risk_tolerance = expected_value
-        constraints.append({'type': 'ineq', 'fun': lambda weights: float(risk_tolerance) - metrics(weights, np.array(ret_means), np.array(covs_mean))[1]})
-        optimal_weights = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(covs_mean))[0] * -1, initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
+        constraints = [{'type':'eq','fun':lambda weights: np.sum(weights) - 1}, {'type': 'ineq', 'fun': lambda weights: float(risk_tolerance) - metrics(weights, np.array(ret_means), np.array(covs_mean))[1]}]
+        optimal_weights_mean = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(covs_mean))[0] * -1, initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
+        sharpe_ratio_optimal_weights_mean = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(covs_mean))[2] * -1, initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
 
         axes.vlines(float(expected_value), linspace_min, linspace_max, linewidth=1, color='#ff00ff')
+        axes2.vlines(float(expected_value), linspace_min, linspace_max, linewidth=1, color='#ff00ff')
 
     elif calculation_type == 'return':
         expected_return = expected_value
-        constraints.append({'type': 'eq', 'fun': lambda weights: metrics(weights, np.array(ret_means), np.array(covs_mean))[0] - float(expected_return)})
-        optimal_weights = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(covs_mean))[1], initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
+        constraints = [{'type':'eq','fun':lambda weights: np.sum(weights) - 1}, {'type': 'eq', 'fun': lambda weights: metrics(weights, np.array(ret_means), np.array(covs_mean))[0] - float(expected_return)}]
+        optimal_weights_mean = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(covs_mean))[1], initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
+        sharpe_ratio_optimal_weights_mean = optimize.minimize(lambda weights: metrics(weights, np.array(ret_means), np.array(covs_mean))[2] * -1, initial_guess, method='SLSQP', bounds=bounds, constraints=constraints).x
+
 
         axes.hlines(float(expected_value), horizontal_min, horizontal_max, linewidth=1, color='#ff00ff')
+        axes2.hlines(float(expected_value), horizontal_min, horizontal_max, linewidth=1, color='#ff00ff')
 
     else:
         exit(1)
 
+    axes.scatter(metrics(optimal_weights_mean, np.array(ret_means), np.array(covs_mean))[1], metrics(optimal_weights_mean, np.array(ret_means), np.array(covs_mean))[0], marker='o', color='#ff00ff', zorder=3)
+    axes2.scatter(metrics(optimal_weights_mean, np.array(ret_means), np.array(covs_mean))[1], metrics(optimal_weights_mean, np.array(ret_means), np.array(covs_mean))[0], marker='o', color='#ff00ff', zorder=3)
+    axes.scatter(metrics(sharpe_ratio_optimal_weights_mean, np.array(ret_means), np.array(covs_mean))[1], metrics(sharpe_ratio_optimal_weights, np.array(ret_means), np.array(covs_mean))[0], marker='o', color='#ffaa00', zorder=3)
+    axes2.scatter(metrics(sharpe_ratio_optimal_weights_mean, np.array(ret_means), np.array(covs_mean))[1], metrics(sharpe_ratio_optimal_weights, np.array(ret_means), np.array(covs_mean))[0], marker='o', color='#ffaa00', zorder=3)
+
     legend_text = "Median Values:\n"
-    legend_text += '\n'.join([f'{metric}: {metrics(optimal_weights, np.array(ret_means), np.array(covs_mean))[j]:.2%}' for j, metric in enumerate(['Expected Return','Volatility','Sharpe Ratio'])]) + '\n\n'
-    legend_text += '\n'.join([f'{asset}\'s weight: {j:.2%}' for asset, j in zip(['PETR4', 'WEGE3', 'ABEV3', 'VALE3'], optimal_weights)]) + '\n'
+    legend_text += '\n'.join([f'{metric}: {metrics(optimal_weights_mean, np.array(ret_means), np.array(covs_mean))[j]:.2%}' for j, metric in enumerate(['Expected Return','Volatility','Sharpe Ratio'])]) + '\n\n'
+    legend_text += '\n'.join([f'{asset}\'s weight: {j:.2%}' for asset, j in zip(['PETR4', 'WEGE3', 'ABEV3', 'VALE3'], optimal_weights_mean)]) + '\n'
     axes.text(horizontal_max, linspace_max, legend_text, color="#ffffff")
+    axes2.text(horizontal_max, linspace_max, legend_text, color="#ffffff")
     axes.set_xlim(horizontal_min, horizontal_max)
+    axes2.set_xlim(horizontal_min, horizontal_max)
     axes.set_ylim(linspace_min, linspace_max)
+    axes2.set_ylim(linspace_min, linspace_max)
 
 
     legend_elements = [Line2D([0], [0], color='#3fccff', label='Efficient Frontiers'),
@@ -518,6 +535,14 @@ def __main__():
                        Line2D([0], [0], marker='o', markersize=20, color='#ffaa00', label='Max. Sharpe Ratio')]
 
     axes.legend(handles=legend_elements, loc='upper left')
+
+    legend_elements = [Line2D([0], [0], color='#3fccff', label='Efficient Frontiers'),
+                       Line2D([0], [0], color='#ff0000', label='Mean Efficient Frontier'),
+                       Line2D([0], [0], color='#00ff00', label='Confidence Interval Limits (95%)'),
+                       Line2D([0], [0], marker='o', color='#ff00ff', label='Optimal Portfolio'),
+                       Line2D([0], [0], marker='o', markersize=20, color='#ffaa00', label='Max. Sharpe Ratio')]
+
+    axes2.legend(handles=legend_elements, loc='upper left')
 
     plt.show()
 
